@@ -18,29 +18,61 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnDate = findViewById(R.id.btnDate);
-        textDate = findViewById(R.id.textDate);
+        btnDate = findViewById(R.id.button);
+textDate = findViewById(R.id.textView);
 
-        btnDate.setOnClickListener(v -> {
+btnDate.setOnClickListener(v -> {
 
-            Calendar calendar = Calendar.getInstance();
+    Calendar calendar = Calendar.getInstance();
 
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH);
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
+    int year = calendar.get(Calendar.YEAR);
+    int month = calendar.get(Calendar.MONTH);
+    int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-            DatePickerDialog datePickerDialog =
-                    new DatePickerDialog(this,
-                            (view, selectedYear, selectedMonth, selectedDay) -> {
+    DatePickerDialog datePickerDialog =
+            new DatePickerDialog(this,
+                    (view, selectedYear, selectedMonth, selectedDay) -> {
 
-                                textDate.setText(selectedDay + "/" +
-                                        (selectedMonth+1) + "/" +
-                                        selectedYear);
+                        Calendar selectedDate = Calendar.getInstance();
+                        selectedDate.set(selectedYear, selectedMonth, selectedDay);
 
-                            }, year, month, day);
+                        // Normalize today's date (remove time)
+                        Calendar today = Calendar.getInstance();
+                        today.set(Calendar.HOUR_OF_DAY, 0);
+                        today.set(Calendar.MINUTE, 0);
+                        today.set(Calendar.SECOND, 0);
+                        today.set(Calendar.MILLISECOND, 0);
 
-            datePickerDialog.show();
-        });
+                        // Max date = today + 20 days
+                        Calendar maxDate = Calendar.getInstance();
+                        maxDate.add(Calendar.DAY_OF_MONTH, 20);
+
+                        if (selectedDate.after(today) && !selectedDate.after(maxDate)) {
+
+                            textDate.setText(selectedDay + "/" +
+                                    (selectedMonth + 1) + "/" +
+                                    selectedYear);
+
+                        } else {
+                            Toast.makeText(MainActivity.this,
+                                    "Select date after today and within 20 days",
+                                    Toast.LENGTH_LONG).show();
+                        }
+
+                    }, year, month, day);
+
+    // 🔥 Restrict picker UI also (very important)
+    Calendar minDate = Calendar.getInstance();
+    minDate.add(Calendar.DAY_OF_MONTH, 1); // tomorrow
+
+    Calendar maxDate = Calendar.getInstance();
+    maxDate.add(Calendar.DAY_OF_MONTH, 20); // next 20 days
+
+    datePickerDialog.getDatePicker().setMinDate(minDate.getTimeInMillis());
+    datePickerDialog.getDatePicker().setMaxDate(maxDate.getTimeInMillis());
+
+    datePickerDialog.show();
+});
     }
 }
 
@@ -92,16 +124,46 @@ public class MainActivity extends AppCompatActivity {
 
         spinnerWords = findViewById(R.id.spinnerWords);
 
-        String[] words = {"Apple", "Banana", "Mango", "Orange"};
+        String[] words = {"Fruits","Apple", "Banana", "Mango", "Orange"};
 
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(this,
-                        android.R.layout.simple_spinner_item,
-                        words);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+        this,
+        android.R.layout.simple_spinner_item,
+        words
+) {
+    @Override
+    public boolean isEnabled(int position) {
+        // Disable first item (hint)
+        return position != 0;
+    }
 
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    @Override
+    public View getDropDownView(int position, View convertView, ViewGroup parent) {
+        View view = super.getDropDownView(position, convertView, parent);
 
-        spinnerWords.setAdapter(adapter);
+        TextView tv = (TextView) view;
+
+        if (position == 0) {
+            tv.setTextColor(Color.GRAY); // grey hint
+        } else {
+            tv.setTextColor(Color.BLACK);
+        }
+
+        return view;
+    }
+};
+
+adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+spinnerWords.setAdapter(adapter);
+
+
+// VALIDATE
+if (spinner2.getSelectedItemPosition() == 0) {
+    Toast.makeText(this, "Please select a direction", Toast.LENGTH_SHORT).show();
+} else {
+    String selected = spinner2.getSelectedItem().toString();
+    // proceed
+}
     }
 }
 
@@ -226,9 +288,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         getMenuInflater().inflate(R.menu.menu_main, menu);
-
         return true;
     }
 
@@ -248,9 +308,28 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 
+// THEME -> (alternative is to use add toolbar / app bar and menu will be on it by itself)
+<style name="Base.Theme.IamNoob" parent="Theme.AppCompat.Light.DarkActionBar">
+</style>
+
+
+//if we want to show and not overflow-> add in xml
+app:showAsAction="always"
 7---------------AppBar
 
-import androidx.appcompat.widget.Toolbar;
+//IN activity_main.xml ->
+<androidx.appcompat.widget.Toolbar
+    android:id="@+id/toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/colorPrimary"
+    android:title="IamNoob App"
+    android:titleTextColor="@android:color/white"/>
+
+
+//MainActivity.java-> inside onCreate()--->   
+
+import androidx.appcompat.widget.Toolbar; //important
 
 Toolbar toolbar;
 
@@ -317,8 +396,6 @@ public class MainActivity extends AppCompatActivity {
 8------------Context Menu (Long Press)
 
 Create menu in xml first
-
-
 package com.example.contextmenu;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -341,7 +418,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         textView = findViewById(R.id.textView);
-
         registerForContextMenu(textView);
     }
 
@@ -443,10 +519,26 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 
+9.1-----------------------Alert
+submit.setOnClickListener(v -> {
+
+    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+    builder.setTitle("Confirmation");
+    builder.setMessage("Are you sure you want to proceed?");
+
+    builder.setPositiveButton("Yes", (dialog, which) -> {
+        Toast.makeText(this, "Proceeding...", Toast.LENGTH_SHORT).show();
+    });
+
+    builder.setNegativeButton("No", (dialog, which) -> {
+        dialog.dismiss();
+    });
+
+    builder.show();
+});
 
 10------------------------TabLayout
-
-
 
 
 TABLAYOUT (ANDROID JAVA – SIMPLE VERSION)
@@ -457,26 +549,24 @@ implementation 'com.google.android.material:material:1.9.0'
 implementation 'androidx.viewpager2:viewpager2:1.0.0'
 
 STEP 2 — activity_main.xml
-
 <LinearLayout
- xmlns:android="http://schemas.android.com/apk/res/android"
- xmlns:app="http://schemas.android.com/apk/res-auto"
- android:layout_width="match_parent"
- android:layout_height="match_parent"
- android:orientation="vertical">
-
-```
-<com.google.android.material.tabs.TabLayout
-    android:id="@+id/tabLayout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"/>
+    android:layout_height="match_parent">
 
-<androidx.viewpager2.widget.ViewPager2
-    android:id="@+id/viewPager"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"/>
-```
+    <!-- Tabs -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
+    <!-- Pages -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </LinearLayout>
 
 STEP 3 — fragment_page.xml
