@@ -81,6 +81,27 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 
+```java
+btnDate.setOnClickListener(v -> {
+    Calendar now = Calendar.getInstance();
+
+    int year = now.get(Calendar.YEAR);
+    int month = now.get(Calendar.MONTH);
+    int day = now.get(Calendar.DAY_OF_MONTH);
+
+    DatePickerDialog dialog = new DatePickerDialog(
+            MainActivity.this,
+            (view, y, m, d) -> {
+                String selectedDate = String.format("%04d-%02d-%02d", y, m+1, d);
+                editDate.setText(selectedDate);
+            },
+            year, month, day
+    );
+
+    dialog.show();
+});
+```
+
 ## 2) Time Picker
 
 ### MainActivity.java (snippet)
@@ -110,6 +131,7 @@ btnTime.setOnClickListener(v -> {
     );
 
     dialog.show();
+    //String time = String.format("%02d:%02d:00", hour, minute);
 });
 ```
 
@@ -321,76 +343,12 @@ public class MainActivity extends AppCompatActivity {
 </menu>
 ```
 
-### MainActivity.java
-```java
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-
-public class MainActivity extends AppCompatActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_settings) {
-            Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-        if (item.getItemId() == R.id.menu_help) {
-            Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-        if (item.getItemId() == R.id.menu_exit) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-}
-```
-
-### styles.xml (if you want default action bar)
-```xml
-<style name="Base.Theme.IamNoob" parent="Theme.AppCompat.Light.DarkActionBar" />
-```
-
-## 7) AppBar with Toolbar
-
-### activity_main.xml
-```xml
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
-        android:title="IamNoob App"
-        android:titleTextColor="@android:color/white" />
-
-    <!-- Your screen content here -->
-
-</LinearLayout>
-```
+## 7) AppBar with Toolbar for Menu
 
 ### MainActivity.java
 ```java
+//res->new android directory->menu
+//menu->menu.xml
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
