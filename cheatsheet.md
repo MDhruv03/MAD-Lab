@@ -707,3 +707,223 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 ```
+DATABASE more or less - 
+ACtivity main file-
+package com.example.myapplication;
+
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+public class MainActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        EditText name,email;
+        MyDatabaseHelper dbHelper;
+        Button insertBtn;
+        TextView textView = findViewById(R.id.textView);
+        dbHelper = new MyDatabaseHelper(this);
+
+        name = findViewById(R.id.editTextText);
+        email = findViewById(R.id.editTextText2);
+        insertBtn = findViewById(R.id.button);
+
+        insertBtn.setOnClickListener(v -> {
+            String userName = name.getText().toString();
+            String userEmail = email.getText().toString();
+
+            long result = dbHelper.insertUser(userName, userEmail);
+            if (result == -1) {
+                Toast.makeText(this, "Insert Failed", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Inserted Successfully", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+
+        String[][] users = dbHelper.getUsers("John");
+
+        if (users != null) {
+            String output = "";
+
+            for (int i = 0; i < users.length; i++) {
+                output += "ID: " + users[i][0] +
+                        "\nName: " + users[i][1] +
+                        "\nEmail: " + users[i][2] + "\n\n";
+            }
+
+            textView.setText(output);
+        } else {
+            textView.setText("No users found");
+        }
+    }
+}
+
+
+--------------------------
+MyDatabaseHelper file
+package com.example.myapplication;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class MyDatabaseHelper extends SQLiteOpenHelper {
+        private static final String DATABASE_NAME = "MyDatabase.db";
+        private static final int DATABASE_VERSION = 1;
+
+    private static final String CREATE_TABLE =
+            "CREATE TABLE Users (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "name TEXT NOT NULL, " +
+                    "email TEXT UNIQUE);";
+
+    public MyDatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(CREATE_TABLE); // Create the table
+    }
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS Users"); // Drop old table
+        onCreate(db); // Create new table
+    }
+
+
+    public long insertUser(String name, String email) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("name", name);
+        values.put("email", email);
+
+        long result = db.insert("Users", null, values);
+        return result;
+    }
+
+
+    public String[] getUser(String input) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "SELECT * FROM Users " +
+                " WHERE name = '"  + input + "'" +
+                " OR email= '" + input + "'";
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        String[] userData = null;
+
+        if (cursor.moveToFirst()) {
+            userData = new String[3];
+
+            userData[0] = String.valueOf(cursor.getInt(0)); // id
+            userData[1] = cursor.getString(1);              // name
+            userData[2] = cursor.getString(2);              // email
+        }
+
+        cursor.close();
+        db.close();
+        return userData;
+    }
+
+    public int updateUser(String input, String newName) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // prevent crash if input has '
+        input = input.replace("'", "''");
+        newName = newName.replace("'", "''");
+
+        String query = "UPDATE Users SET name = '" + newName + "' " +
+                "WHERE name = '" + input + "' " +
+                "OR email = '" + input + "'";
+
+        db.execSQL(query);
+
+        db.close();
+
+        return 1; // assume success (since execSQL doesn't return count)
+    }
+
+
+    public int deleteUser(String input) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // prevent crash if input has '
+        input = input.replace("'", "''");
+
+        String query = "DELETE FROM Users " +
+                "WHERE name = '" + input + "' " +
+                "OR email = '" + input + "'";
+
+        db.execSQL(query);
+
+        db.close();
+
+        return 1; // assume success
+    }
+
+    public String[][] getUsers(String input) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // prevent crash for '
+        input = input.replace("'", "''");
+
+        String query = "SELECT * FROM Users " +
+                "WHERE name = '" + input + "' " +
+                "OR email = '" + input + "'";
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        int rowCount = cursor.getCount();
+
+        if (rowCount == 0) {
+            cursor.close();
+            db.close();
+            return null;
+        }
+
+        String[][] data = new String[rowCount][3];
+
+        int i = 0;
+
+        if (cursor.moveToFirst()) {
+            do {
+                data[i][0] = String.valueOf(cursor.getInt(0)); // id
+                data[i][1] = cursor.getString(1);              // name
+                data[i][2] = cursor.getString(2);              // email
+                i++;
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+
+        return data;
+    }
+
+
+}
+
+
