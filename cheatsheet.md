@@ -707,8 +707,9 @@ public class MainActivity extends AppCompatActivity {
     }
 }
 ```
-DATABASE more or less - 
-ACtivity main file-
+## 10) Database (simple)
+### MainActivity.java
+```java
 package com.example.myapplication;
 
 import android.os.Bundle;
@@ -776,10 +777,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
-
---------------------------
-MyDatabaseHelper file
+```
+### MyDatabaseHelper.java
+```java
 package com.example.myapplication;
 
 import android.content.ContentValues;
@@ -925,5 +925,4 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
 
 
 }
-
-
+```    
